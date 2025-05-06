@@ -55,10 +55,8 @@ static bool ChargePositiveEdge = false;
 static bool SafetyPositiveEdge = false;
 static bool ExplosionPositiveEdge = false;
 
-static bool ExpectingControlMessage = false;
-
-static bool SafetyMessageReturned = false;
-static bool SafetyMessageReturnedOk = false;
+static bool fuseConnectedMessageReceived = false;
+static bool fuseConnected = false;
 
 enum LastSendMessage{
     LSM_NONE,
@@ -233,7 +231,7 @@ void sendFuzeData(void){
 
             lastSendMessage = LSM_SAFETY;
 
-            if(SafetyMessageReturnedOk){
+            if(fuseConnected){
                 FUZE_STATUS = 1;
             }
             else{
@@ -250,18 +248,16 @@ void sendFuzeData(void){
                 donmezogluSerialPrintC('K');
 
                 lastSendMessage = LSM_CONTROL;
-
-                ExpectingControlMessage = true;
             }
         }
-        else if(ExplosionHigh && SafetyMessageReturnedOk){
+        else if(ExplosionHigh && fuseConnected){
             if(lastSendMessage != LSM_EXPLOSION){
                 donmezogluSerialPrintC('P');
 
                 lastSendMessage = LSM_EXPLOSION;
             }
         }
-        else if(ChargeHigh && SafetyMessageReturnedOk){
+        else if(ChargeHigh && fuseConnected){
             if(lastSendMessage != LSM_CHARGE){
                 donmezogluSerialPrintC('S');
 
@@ -274,38 +270,61 @@ void sendFuzeData(void){
     }
 }
 
+void serialDataReceivedF(){
+    // Zaten fünye kontrol edilmiş ve zaten bağlı olduğu biliniyorken tekrar status değiştirme yoksa E-E gösteremem
+    if(!fuseConnectedMessageReceived || !fuseConnected){
+        fuseConnectedMessageReceived = true;
+        fuseConnected = true;
+        FUZE_STATUS = 1;
+    }
+}
+
+void serialDataReceivedH(){
+    fuseConnectedMessageReceived = true;
+    fuseConnected = false;
+    FUZE_STATUS = 0;
+}
+
+void serialDataReceivedE(){
+    FUZE_STATUS = 2;
+}
+
 void awaitFuzeData(void){
     static uint32_t bytesWaiting = 0;
 
-    if(ExpectingControlMessage){
-        if (dSerialPort->rxBufferHead >= dSerialPort->rxBufferTail) {
-            bytesWaiting = dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
-        } else {
-            bytesWaiting = dSerialPort->rxBufferSize + dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
-        }
+    if (dSerialPort->rxBufferHead >= dSerialPort->rxBufferTail) {
+        bytesWaiting = dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
+    } else {
+        bytesWaiting = dSerialPort->rxBufferSize + dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
+    }
 
-        if(bytesWaiting > 0){
-            for(uint32_t i = 1; i <= bytesWaiting; ++i){
-                static uint8_t dataReaded;
-                dataReaded = serialRead(dSerialPort);
+    if(bytesWaiting > 0){
+        for(uint32_t i = 1; i <= bytesWaiting; ++i){
+            static uint8_t dataReaded;
+            dataReaded = serialRead(dSerialPort);
 
-                if(dataReaded == 'F' || dataReaded == 'f'){
-                    SafetyMessageReturned = true;
-                    SafetyMessageReturnedOk = true;
-                    ExpectingControlMessage = false;
-                    FUZE_STATUS = 1;
-                }
-                else if(dataReaded == 'H' || dataReaded == 'h'){
-                    SafetyMessageReturned = true;
-                    SafetyMessageReturnedOk = false;
-                    ExpectingControlMessage = false;
-                    FUZE_STATUS = 0;
-                }
+            switch (dataReaded)
+            {
+            case 'F':
+            case 'f':
+                serialDataReceivedF();
+                break;
+            case 'H':
+            case 'h':
+                serialDataReceivedH();
+                break;
+            case 'E':
+            case 'e':
+                serialDataReceivedE();
+                break;
+            default:
+                break;
             }
         }
     }
 }
 
+/*
 void chargeTimeControl(timeUs_t currentTimeUs){
     static timeUs_t chargeStartingTimePoint = 0;
 
@@ -323,6 +342,7 @@ void chargeTimeControl(timeUs_t currentTimeUs){
         chargeStartingTimePoint = currentTimeUs;
     }
 }
+*/
 
 void periodicTask(timeUs_t currentTimeUs){
     if(!dInitializationCompleted || !dRcConnection || !dInitialSafety){
@@ -337,7 +357,7 @@ void periodicTask(timeUs_t currentTimeUs){
 
     awaitFuzeData();
 
-    chargeTimeControl(currentTimeUs);
+    //chargeTimeControl(currentTimeUs);
 
     lastSendMessagePrev = lastSendMessage;
 
