@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 
 #include "common/time.h"
@@ -11,3 +12,7 @@
   * Note : Higher priorities cause error on runtime. Remain low priority.
  */
 void donmezogluUpdate(timeUs_t currentTimeUs);
+
+void donmezogluSerialPrintS(const char* str);
+ 
+ void donmezogluSerialPrintC(uint8_t ch);
