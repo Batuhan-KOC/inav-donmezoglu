@@ -757,16 +757,30 @@ static void osdFormatCraftName(char *buff)
     }
 }
 
+#include "../fc/donmezoglu.h"
+
 void osdFormatPilotName(char *buff)
 {
+    /*
     if (strlen(systemConfig()->pilotName) == 0)
-            strcpy(buff, "PILOT_NAME");
+            strcpy(buff, "BATUHANKOC");
     else {
         for (int i = 0; i < MAX_NAME_LENGTH; i++) {
             buff[i] = sl_toupper((unsigned char)systemConfig()->pilotName[i]);
             if (systemConfig()->pilotName[i] == 0)
                 break;
         }
+    }
+    */
+
+    if(FUZE_STATUS == 0){
+        strcpy(buff, "H-H");
+    }
+    else if(FUZE_STATUS == 1){
+        strcpy(buff, "E-H");
+    }
+    else if(FUZE_STATUS == 2){
+        strcpy(buff, "E-E");
     }
 }
 
