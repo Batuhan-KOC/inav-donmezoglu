@@ -108,7 +108,18 @@ void checkSafety(void){
             FUZE_STATUS = 0;
         }
         else{
-            FUZE_STATUS = 3;
+            if(aux4Val < AUX_EDGE_VALUE){
+                FUZE_STATUS = 3; // Güvenliği aç
+            }
+            else if(aux3Val > AUX_EDGE_VALUE){
+                FUZE_STATUS = 4; // Şarjı kapat
+            }
+            else if(aux5Val > AUX_EDGE_VALUE){
+                FUZE_STATUS = 5; // Patlatmaya basma
+            }
+            else if(aux2Val > AUX_EDGE_VALUE){
+                FUZE_STATUS = 6; // Kontrole basma
+            }
         }
     }
 

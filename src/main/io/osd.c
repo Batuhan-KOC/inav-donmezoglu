@@ -774,16 +774,25 @@ void osdFormatPilotName(char *buff)
     */
 
     if(FUZE_STATUS == 0){
-        strcpy(buff, "H-H");
+        strcpy(buff, "      H-H      ");
     }
     else if(FUZE_STATUS == 1){
-        strcpy(buff, "E-H");
+        strcpy(buff, "      E-H      ");
     }
     else if(FUZE_STATUS == 2){
-        strcpy(buff, "E-E");
+        strcpy(buff, "      E-E      ");
     }
     else if(FUZE_STATUS == 3){
-        strcpy(buff, "SET SAFETY MODE ON");
+        strcpy(buff, "GUVENLIK > AC  ");
+    }
+    else if(FUZE_STATUS == 4){
+        strcpy(buff, "SARJ > KAPAT   ");
+    }
+    else if(FUZE_STATUS == 5){
+        strcpy(buff, "PATLAMA > KAPAT");
+    }
+    else if(FUZE_STATUS == 6){
+        strcpy(buff, "KONTROL > KAPAT");
     }
 }
 
