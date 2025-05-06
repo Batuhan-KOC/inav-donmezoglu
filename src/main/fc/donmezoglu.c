@@ -47,6 +47,8 @@ static bool dRcConnection = false;
 
 static bool dInitialSafety = false;
 
+static int dLastAux5State = -1;
+
 static float AUX_EDGE_VALUE_MIN = 1300;
 static float AUX_MID_VALUE = 1500;
 static float AUX_EDGE_VALUE = 1750;
@@ -61,10 +63,12 @@ static bool ChargeHigh = false;
 static bool SafetyHigh = false;
 static bool ExplosionHigh = false;
 
+static bool SendTapaEnable = false;
+static bool SendTapaDisable = false;
+
 static bool ControlPositiveEdge = false;
 static bool ChargePositiveEdge = false;
 static bool SafetyPositiveEdge = false;
-static bool ExplosionPositiveEdge = false;
 
 static bool fuseConnectedMessageReceived = false;
 static bool fuseConnected = false;
@@ -224,18 +228,45 @@ void parseRcData(void){
     }
 
     if(AUX5Value > AUX_EDGE_VALUE){
-        if(!ExplosionHigh){
-            ExplosionPositiveEdge = true;
+        if(dLastAux5State != 3){
+            SendTapaEnable = false;
+            SendTapaDisable = false;
+            ExplosionHigh = true;
         }
 
-        ExplosionHigh = true;
+        dLastAux5State = 3;
+    }
+    else if(AUX5Value > AUX_EDGE_VALUE_MIN){
+        if(dLastAux5State != 2){
+            SendTapaEnable = true;
+            SendTapaDisable = false;
+            ExplosionHigh = false;
+        }
+
+        dLastAux5State = 2;
     }
     else{
-        ExplosionHigh = false;
+        if(dLastAux5State != 1){
+            SendTapaEnable = false;
+            SendTapaDisable = true;
+            ExplosionHigh = false;
+        }
+
+        dLastAux5State = 1;
     }
 }
 
 void sendFuzeData(void){
+    if(SendTapaEnable){
+        donmezogluSerialPrintC('O');
+        SendTapaEnable = false;
+    }
+
+    if(SendTapaDisable){
+        donmezogluSerialPrintC('C');
+        SendTapaDisable = false;
+    }
+
     if(SafetyHigh){
         if(lastSendMessage != LSM_SAFETY){
             donmezogluSerialPrintC('G');
