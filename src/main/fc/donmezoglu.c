@@ -203,6 +203,7 @@ void sendFuzeData(void){
 }
 
 void awaitFuzeData(void){
+    // If send any other signal or depress the control button, expecting will be set to false
     if(lastSendMessage != LSM_CONTROL){
         ExpectingControlMessage = false;
     }
@@ -217,12 +218,12 @@ void awaitFuzeData(void){
                 static uint8_t dataReaded;
                 dataReaded = serialRead(dSerialPort);
 
-                if(dataReaded == 'F'){
+                if(dataReaded == 'F' || dataReaded == 'f'){
                     SafetyMessageReturned = true;
                     SafetyMessageReturnedOk = true;
                     ExpectingControlMessage = false;
                 }
-                else if(dataReaded == 'H'){
+                else if(dataReaded == 'H' || dataReaded == 'h'){
                     SafetyMessageReturned = true;
                     SafetyMessageReturnedOk = false;
                     ExpectingControlMessage = false;
@@ -233,7 +234,7 @@ void awaitFuzeData(void){
 }
 
 void periodicTask(void){
-    if(!dInitializationCompleted || dRcConnection){
+    if(!dInitializationCompleted || !dRcConnection){
         return;
     }
 
