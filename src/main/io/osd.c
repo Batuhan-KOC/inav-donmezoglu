@@ -794,6 +794,9 @@ void osdFormatPilotName(char *buff)
     else if(FUZE_STATUS == 6){
         strcpy(buff, "KONTROL > KAPAT");
     }
+    else if(FUZE_STATUS == 7){
+        strcpy(buff, "ANAHTAR > AC   ");
+    }
 }
 
 static const char * osdArmingDisabledReasonMessage(void)
