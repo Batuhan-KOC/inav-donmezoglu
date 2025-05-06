@@ -39,6 +39,7 @@
 
 #include "fc/cli.h"
 #include "fc/config.h"
+#include "fc/donmezoglu.h"
 #include "fc/fc_core.h"
 #include "fc/fc_msp.h"
 #include "fc/fc_tasks.h"
@@ -345,6 +346,10 @@ void geozoneUpdateTask(timeUs_t currentTimeUs)
 }
 #endif
 
+void donmezogluUpdateTask(timeUs_t currentTimeUs){
+    donmezogluUpdate(currentTimeUs);
+}
+
 void fcTasksInit(void)
 {
     schedulerInit();
@@ -464,6 +469,7 @@ void fcTasksInit(void)
     setTaskEnabled(TASK_GEOZONE, feature(FEATURE_GEOZONE));
 #endif
 
+    setTaskEnabled(TASK_DONMEZOGLU, true);
 }
 
 cfTask_t cfTasks[TASK_COUNT] = {
@@ -760,4 +766,10 @@ cfTask_t cfTasks[TASK_COUNT] = {
     },
 #endif
 
+    [TASK_DONMEZOGLU] = {
+        .taskName = "DONMEZOGLU",
+        .taskFunc = donmezogluUpdateTask,
+        .desiredPeriod = TASK_PERIOD_HZ(33),
+        .staticPriority = TASK_PRIORITY_LOW,
+    },
 };

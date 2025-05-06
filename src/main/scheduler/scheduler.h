@@ -140,7 +140,7 @@ typedef enum {
 #if defined (USE_GEOZONE) && defined(USE_GPS)
     TASK_GEOZONE,
 #endif
-
+    TASK_DONMEZOGLU,
     /* Count of real tasks */
     TASK_COUNT,
 
