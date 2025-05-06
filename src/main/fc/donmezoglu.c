@@ -284,8 +284,8 @@ void sendFuzeData(void){
     else{
         if(ControlHigh){
             if(lastSendMessage != LSM_CONTROL){
-                dSerialPort->rxBufferHead = 0;
-                dSerialPort->rxBufferTail = 0;
+                //dSerialPort->rxBufferHead = 0;
+                //dSerialPort->rxBufferTail = 0;
 
                 donmezogluSerialPrintC('K');
 
