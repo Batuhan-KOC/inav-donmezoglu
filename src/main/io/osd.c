@@ -782,6 +782,9 @@ void osdFormatPilotName(char *buff)
     else if(FUZE_STATUS == 2){
         strcpy(buff, "E-E");
     }
+    else if(FUZE_STATUS == 3){
+        strcpy(buff, "SET SAFETY MODE ON");
+    }
 }
 
 static const char * osdArmingDisabledReasonMessage(void)
