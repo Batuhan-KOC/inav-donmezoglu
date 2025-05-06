@@ -42,9 +42,6 @@ int FUZE_STATUS = 0;
 int TAPA_STATUS = -1;
 
 static serialPort_t* dSerialPort = NULL;
-static serialPort_t* dSerialPortDebug1 = NULL;
-static serialPort_t* dSerialPortDebug2 = NULL;
-static serialPort_t* dSerialPortDebug3 = NULL;
 static bool dInitializationCompleted = false;
 static bool dRcConnection = false;
 
@@ -168,15 +165,9 @@ void initializationTask(void){
     if(!dInitializationCompleted){
 
         serialPortUsage_t* usage = findSerialPortUsageByIdentifier(SERIAL_PORT_UART5);
-        serialPortUsage_t* usageDebug1 = findSerialPortUsageByIdentifier(SERIAL_PORT_USB_VCP);
-        serialPortUsage_t* usageDebug2 = findSerialPortUsageByIdentifier(SERIAL_PORT_USART1);
-        serialPortUsage_t* usageDebug3 = findSerialPortUsageByIdentifier(SERIAL_PORT_SOFTSERIAL1);
 
         if(usage != NULL){
             dSerialPort = usage->serialPort;
-            dSerialPortDebug1 = usageDebug1->serialPort;
-            dSerialPortDebug2 = usageDebug2->serialPort;
-            dSerialPortDebug3 = usageDebug3->serialPort;
 
             dInitializationCompleted = true;
         }
@@ -221,29 +212,32 @@ void parseRcData(void){
         SafetyHigh = false;
     }
 
+    // HIGH
     if(AUX3Value > AUX_EDGE_VALUE){
         if(dLastAux3State != 3){
-            SendTapaEnable = false;
+            SendTapaEnable = true;
             SendTapaDisable = false;
             ChargeHigh = true;
         }
 
         dLastAux3State = 3;
     }
+    // MID
     else if(AUX3Value > AUX_EDGE_VALUE_MIN){
         if(dLastAux3State != 2){
-            SendTapaEnable = true;
-            SendTapaDisable = false;
-            ChargeHigh = false;
+            SendTapaEnable = false;
+            SendTapaDisable = true;
+            ChargeHigh = true;
         }
 
         dLastAux3State = 2;
     }
+    // LOW
     else{
         if(dLastAux3State != 1){
-            SendTapaEnable = false;
-            SendTapaDisable = true;
-            ExplosionHigh = false;
+            SendTapaEnable = true;
+            SendTapaDisable = false;
+            ChargeHigh = false;
         }
 
         dLastAux3State = 1;
