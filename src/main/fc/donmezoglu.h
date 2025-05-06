@@ -15,6 +15,7 @@
 
 extern int FUZE_STATUS;
 extern int TAPA_STATUS;
+extern bool CHARGE_DISPLAYING;
 
 extern serialPortIdentifier_e FUZE_PORT_IDENTIFIER;
 

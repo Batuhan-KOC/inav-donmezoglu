@@ -41,6 +41,8 @@ serialPortIdentifier_e FUZE_PORT_IDENTIFIER = SERIAL_PORT_UART5;
  */
 int TAPA_STATUS = -1;
 
+bool CHARGE_DISPLAYING = false;
+
 static serialPort_t* dSerialPort = NULL;
 static bool dInitializationCompleted = false;
 static bool dRcConnection = false;
@@ -92,6 +94,17 @@ static float oldAUX3 = 1500;
 static float oldAUX4 = 1500;
 static float oldAUX5 = 1500;
 
+void setFuzeData(int value){
+    FUZE_STATUS = value;
+
+    if(value == 2){
+        CHARGE_DISPLAYING = true;
+    }
+    else{
+        CHARGE_DISPLAYING = false;
+    }
+}
+
 void waitRcData(void){
     if(dInitializationCompleted && !dRcConnection){
         oldAUX2 = rcData[AUX2];
@@ -108,7 +121,8 @@ void waitRcData(void){
             dRcConnection = true;
         }
         else{
-            FUZE_STATUS = 8; // Connect Rc Controller
+            //FUZE_STATUS = 8; // Connect Rc Controller
+            setFuzeData(8); // Connect Rc Controller
         }
     }
 
@@ -144,23 +158,23 @@ void checkSafety(void){
            aux5Val < AUX_EDGE_VALUE &&
            firstFuzeDataReceived){
             dInitialSafety = true;
-            FUZE_STATUS = 0;
+            setFuzeData(0);
         }
         else{
             if(aux4Val < AUX_EDGE_VALUE){
-                FUZE_STATUS = 3; // Güvenliği aç
+                setFuzeData(3); // Güvenliği aç
             }
             else if(aux3Val > AUX_EDGE_VALUE){
-                FUZE_STATUS = 4; // Şarjı kapat
+                setFuzeData(4); // Şarjı kapat
             }
             else if(aux5Val > AUX_EDGE_VALUE_MIN){
-                FUZE_STATUS = 5; // Patlatmaya basma
+                setFuzeData(5); // Patlatmaya basma
             }
             else if(aux2Val > AUX_EDGE_VALUE){
-                FUZE_STATUS = 6; // Kontrole basma
+                setFuzeData(6); // Kontrole basma
             }
             else if(!firstFuzeDataReceived){
-                FUZE_STATUS = 7; // Anahtarı Aç
+                setFuzeData(7); // Anahtarı Aç
             }
         }
     }
@@ -290,10 +304,12 @@ void sendFuzeData(void){
             }
         }
         else if(ExplosionHigh && fuseConnected){
-            if(LAST_SEND_FUSE_MESSAGE != FM_EXPLOSION){
-                donmezogluSerialPrintC('P');
+            if(CHARGE_DISPLAYING){
+                if(LAST_SEND_FUSE_MESSAGE != FM_EXPLOSION){
+                    donmezogluSerialPrintC('P');
 
-                LAST_SEND_FUSE_MESSAGE = FM_EXPLOSION;
+                    LAST_SEND_FUSE_MESSAGE = FM_EXPLOSION;
+                }
             }
         }
         else if(CHARGE_HIGH_REQUESTED && fuseConnected){
@@ -319,18 +335,18 @@ void serialDataReceivedF(void){
     if(!fuseConnectedMessageReceived || !fuseConnected){
         fuseConnectedMessageReceived = true;
         fuseConnected = true;
-        FUZE_STATUS = 1;
+        setFuzeData(1);
     }
 }
 
 void serialDataReceivedH(void){
     fuseConnectedMessageReceived = true;
     fuseConnected = false;
-    FUZE_STATUS = 0;
+    setFuzeData(0);
 }
 
 void serialDataReceivedE(void){
-    FUZE_STATUS = 2;
+    setFuzeData(2);
     CHARGE_HIGH = true;
 }
 
@@ -338,10 +354,10 @@ void serialDataReceivedW(void){
     CHARGE_HIGH = false;
 
     if(fuseConnected){
-        FUZE_STATUS = 1;
+        setFuzeData(1);
     }
     else{
-        FUZE_STATUS = 0;
+        setFuzeData(0);
     }
 }
 
@@ -349,10 +365,10 @@ void serialDataReceivedN(void){
     CHARGE_HIGH = false;
 
     if(fuseConnected){
-        FUZE_STATUS = 1;
+        setFuzeData(1);
     }
     else{
-        FUZE_STATUS = 0;
+        setFuzeData(0);
     }
 }
 
