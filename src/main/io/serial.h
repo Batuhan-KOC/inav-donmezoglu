@@ -170,6 +170,17 @@ serialPort_t *openSerialPort(
     portMode_t mode,
     portOptions_t options
 );
+
+serialPort_t *openSerialPortSafe(
+    serialPortIdentifier_e identifier,
+    serialPortFunction_e function,
+    serialReceiveCallbackPtr rxCallback,
+    void *rxCallbackData,
+    uint32_t baudrate,
+    portMode_e mode,
+    portOptions_e options
+);
+
 void closeSerialPort(serialPort_t *serialPort);
 
 void waitForSerialPortToFinishTransmitting(serialPort_t *serialPort);
