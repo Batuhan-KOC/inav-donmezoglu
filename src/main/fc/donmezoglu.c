@@ -25,6 +25,7 @@
 #include "io/serial.h"
 #include "fc/rc_controls.h"
 #include "rx/rx.h"
+#include "io/beeper.h"
 
 static serialPort_t* dSerialPort = NULL;
 static bool dInitializationCompleted = false;
@@ -49,6 +50,9 @@ static bool SafetyPositiveEdge = false;
 static bool ExplosionPositiveEdge = false;
 
 static bool ExpectingControlMessage = false;
+
+static bool SafetyMessageReturned = false;
+static bool SafetyMessageReturnedOk = false;
 
 enum LastSendMessage{
     LSM_NONE,
@@ -163,6 +167,8 @@ void sendFuzeData(void){
         if(lastSendMessage != LSM_SAFETY){
             donmezogluSerialPrintC('G');
 
+            beeper(BEEPER_BAT_LOW);
+
             lastSendMessage = LSM_SAFETY;
         }
     }
@@ -176,14 +182,14 @@ void sendFuzeData(void){
                 ExpectingControlMessage = true;
             }
         }
-        else if(ExplosionHigh){
+        else if(ExplosionHigh && SafetyMessageReturnedOk){
             if(lastSendMessage != LSM_EXPLOSION){
                 donmezogluSerialPrintC('P');
 
                 lastSendMessage = LSM_EXPLOSION;
             }
         }
-        else if(ChargeHigh){
+        else if(ChargeHigh && SafetyMessageReturnedOk){
             if(lastSendMessage != LSM_CHARGE){
                 donmezogluSerialPrintC('S');
 
@@ -196,14 +202,52 @@ void sendFuzeData(void){
     }
 }
 
+void awaitFuzeData(void){
+    if(lastSendMessage != LSM_CONTROL){
+        ExpectingControlMessage = false;
+    }
+
+    if(ExpectingControlMessage){
+        static uint32_t bytesWaiting = 0;
+
+        bytesWaiting = serialRxBytesWaiting(dSerialPort);
+
+        if(bytesWaiting > 0){
+            for(uint32_t i = 1; i <= bytesWaiting; ++i){
+                static uint8_t dataReaded;
+                dataReaded = serialRead(dSerialPort);
+
+                if(dataReaded == 'F'){
+                    SafetyMessageReturned = true;
+                    SafetyMessageReturnedOk = true;
+                    ExpectingControlMessage = false;
+                }
+                else if(dataReaded == 'H'){
+                    SafetyMessageReturned = true;
+                    SafetyMessageReturnedOk = false;
+                    ExpectingControlMessage = false;
+                }
+            }
+        }
+    }
+}
+
 void periodicTask(void){
+    if(!dInitializationCompleted || dRcConnection){
+        return;
+    }
+
     readRcData();
 
     readFuzeData();
 
     sendFuzeData();
 
+    awaitFuzeData();
+
     lastSendMessagePrev = lastSendMessage;
+
+    return;
 }
 
 void donmezogluUpdate(timeUs_t currentTimeUs){
