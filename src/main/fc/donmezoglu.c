@@ -312,7 +312,7 @@ void sendFuzeData(void){
     }
 }
 
-void serialDataReceivedF(){
+void serialDataReceivedF(void){
     // Zaten fünye kontrol edilmiş ve zaten bağlı olduğu biliniyorken tekrar status değiştirme yoksa E-E gösteremem
     if(!fuseConnectedMessageReceived || !fuseConnected){
         fuseConnectedMessageReceived = true;
@@ -321,29 +321,29 @@ void serialDataReceivedF(){
     }
 }
 
-void serialDataReceivedH(){
+void serialDataReceivedH(void){
     fuseConnectedMessageReceived = true;
     fuseConnected = false;
     FUZE_STATUS = 0;
 }
 
-void serialDataReceivedE(){
+void serialDataReceivedE(void){
     FUZE_STATUS = 2;
 }
 
-void serialDataReceivedZ(){
+void serialDataReceivedZ(void){
     TAPA_STATUS = 0;
 }
 
-void serialDataReceivedC(){
+void serialDataReceivedC(void){
     TAPA_STATUS = 1;
 }
 
-void serialDataReceivedL(){
+void serialDataReceivedL(void){
     TAPA_STATUS = 2;
 }
 
-void serialDataReceivedT(){
+void serialDataReceivedT(void){
     TAPA_STATUS = 3;
 }
 
@@ -418,7 +418,11 @@ void chargeTimeControl(timeUs_t currentTimeUs){
 }
 */
 
+#define UNUSED(x) (void)(x)
+
 void periodicTask(timeUs_t currentTimeUs){
+    UNUSED(currentTimeUs);
+
     if(!dInitializationCompleted || !dRcConnection || !dInitialSafety){
         return;
     }
