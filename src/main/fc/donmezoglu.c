@@ -36,6 +36,7 @@ static bool dRcConnection = false;
 
 static bool dInitialSafety = false;
 
+static float AUX_EDGE_VALUE_MIN = 1300;
 static float AUX_MID_VALUE = 1500;
 static float AUX_EDGE_VALUE = 1750;
 
@@ -135,7 +136,7 @@ void checkSafety(void){
             else if(aux3Val > AUX_EDGE_VALUE){
                 FUZE_STATUS = 4; // Şarjı kapat
             }
-            else if(aux5Val > AUX_EDGE_VALUE){
+            else if(aux5Val > AUX_EDGE_VALUE_MIN){
                 FUZE_STATUS = 5; // Patlatmaya basma
             }
             else if(aux2Val > AUX_EDGE_VALUE){
@@ -179,7 +180,7 @@ void readRcData(void){
 }
 
 // Examine readed rc values and assign them as high and low and set edge values if necessary
-void readFuzeData(void){
+void parseRcData(void){
     if(AUX2Value > AUX_EDGE_VALUE){
         if(!ControlHigh){
             ControlPositiveEdge = true;
@@ -330,7 +331,7 @@ void periodicTask(timeUs_t currentTimeUs){
 
     readRcData();
 
-    readFuzeData();
+    parseRcData();
 
     sendFuzeData();
 
