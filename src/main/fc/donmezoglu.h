@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "common/time.h"
+#include "io/serial.h"
 
 /*
   * Periodic task with low priority and 33 Hertz frequency.
@@ -14,6 +15,8 @@
 
 extern int FUZE_STATUS;
 extern int TAPA_STATUS;
+
+extern serialPortIdentifier_e FUZE_PORT_IDENTIFIER;
 
 void donmezogluUpdate(timeUs_t currentTimeUs);
 

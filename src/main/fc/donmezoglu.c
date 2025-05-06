@@ -22,13 +22,13 @@
 #include "sensors/compass.h"
 #include "sensors/barometer.h"
 
-#include "io/serial.h"
 #include "drivers/serial_uart.h"
 #include "fc/rc_controls.h"
 #include "rx/rx.h"
 #include "io/beeper.h"
 
 int FUZE_STATUS = 0;
+serialPortIdentifier_e FUZE_PORT_IDENTIFIER = SERIAL_PORT_UART5;
 
 /* 
   * TAPA STATUS
@@ -59,26 +59,33 @@ static float AUX4Value = 0; // GÜVENLİK
 static float AUX5Value = 0; // PATLATMA
 
 static bool ControlHigh = false;
-static bool ChargeHigh = false;
 static bool SafetyHigh = false;
 static bool ExplosionHigh = false;
-
-static bool SendTapaEnable = false;
-static bool SendTapaDisable = false;
 
 static bool fuseConnectedMessageReceived = false;
 static bool fuseConnected = false;
 
-enum LastSendMessage{
-    LSM_NONE,
-    LSM_CONTROL,
-    LSM_CHARGE,
-    LSM_SAFETY,
-    LSM_EXPLOSION
+static bool CHARGE_HIGH_REQUESTED = false;
+static bool SHOCK_SENSOR_ACTIVE_REQUESTED = false;
+static bool CHARGE_HIGH = false;
+static bool SHOCK_SENSOR_ACTIVE = true;
+
+enum FUSE_MESSAGE{
+    FM_NONE,
+    FM_CONTROL,
+    FM_CHARGE,
+    FM_SAFETY,
+    FM_EXPLOSION
 };
 
-static enum LastSendMessage lastSendMessagePrev = LSM_NONE;
-static enum LastSendMessage lastSendMessage = LSM_NONE;
+enum SHOCK_SENSOR_MESSAGE{
+    SSM_NONE,
+    SSM_ENABLE,
+    SSM_DISABLE
+};
+
+static enum FUSE_MESSAGE LAST_SEND_FUSE_MESSAGE = FM_NONE;
+static enum SHOCK_SENSOR_MESSAGE LAST_SEND_SHOCK_SENSOR_MESSAGE = SSM_NONE;
 
 static float oldAUX2 = 1500;
 static float oldAUX3 = 1500;
@@ -164,7 +171,7 @@ void checkSafety(void){
 void initializationTask(void){
     if(!dInitializationCompleted){
 
-        serialPortUsage_t* usage = findSerialPortUsageByIdentifier(SERIAL_PORT_UART5);
+        serialPortUsage_t* usage = findSerialPortUsageByIdentifier(FUZE_PORT_IDENTIFIER);
 
         if(usage != NULL){
             dSerialPort = usage->serialPort;
@@ -215,9 +222,8 @@ void parseRcData(void){
     // HIGH
     if(AUX3Value > AUX_EDGE_VALUE){
         if(dLastAux3State != 3){
-            SendTapaEnable = true;
-            SendTapaDisable = false;
-            ChargeHigh = true;
+            CHARGE_HIGH_REQUESTED = true;
+            SHOCK_SENSOR_ACTIVE_REQUESTED = true;
         }
 
         dLastAux3State = 3;
@@ -225,9 +231,8 @@ void parseRcData(void){
     // MID
     else if(AUX3Value > AUX_EDGE_VALUE_MIN){
         if(dLastAux3State != 2){
-            SendTapaEnable = false;
-            SendTapaDisable = true;
-            ChargeHigh = true;
+            CHARGE_HIGH_REQUESTED = true;
+            SHOCK_SENSOR_ACTIVE_REQUESTED = false;
         }
 
         dLastAux3State = 2;
@@ -235,9 +240,8 @@ void parseRcData(void){
     // LOW
     else{
         if(dLastAux3State != 1){
-            SendTapaEnable = true;
-            SendTapaDisable = false;
-            ChargeHigh = false;
+            CHARGE_HIGH_REQUESTED = false;
+            SHOCK_SENSOR_ACTIVE_REQUESTED = true;
         }
 
         dLastAux3State = 1;
@@ -245,57 +249,67 @@ void parseRcData(void){
 }
 
 void sendFuzeData(void){
-    if(SendTapaEnable){
-        donmezogluSerialPrintC('O');
-        SendTapaEnable = false;
-    }
+    if(SHOCK_SENSOR_ACTIVE_REQUESTED){
+        if(!CHARGE_HIGH_REQUESTED && CHARGE_HIGH){
+            // pass
+        }
+        else{
+            if(LAST_SEND_SHOCK_SENSOR_MESSAGE != SSM_ENABLE){
+                donmezogluSerialPrintC('O');
 
-    if(SendTapaDisable){
-        donmezogluSerialPrintC('C');
-        SendTapaDisable = false;
-    }
-
-    if(SafetyHigh){
-        if(lastSendMessage != LSM_SAFETY){
-            donmezogluSerialPrintC('G');
-
-            lastSendMessage = LSM_SAFETY;
-
-            if(fuseConnected){
-                FUZE_STATUS = 1;
-            }
-            else{
-                FUZE_STATUS = 0;
+                LAST_SEND_SHOCK_SENSOR_MESSAGE = SSM_ENABLE;
             }
         }
     }
     else{
-        if(ControlHigh){
-            if(lastSendMessage != LSM_CONTROL){
-                //dSerialPort->rxBufferHead = 0;
-                //dSerialPort->rxBufferTail = 0;
+        if(LAST_SEND_SHOCK_SENSOR_MESSAGE != SSM_DISABLE){
+            donmezogluSerialPrintC('C');
 
+            LAST_SEND_SHOCK_SENSOR_MESSAGE = SSM_DISABLE;
+        }
+    }
+
+    if(SafetyHigh){
+        if(LAST_SEND_FUSE_MESSAGE != FM_SAFETY){
+            donmezogluSerialPrintC('G');
+
+            LAST_SEND_FUSE_MESSAGE = FM_SAFETY;
+        }
+    }
+    else{
+        if(!CHARGE_HIGH_REQUESTED && CHARGE_HIGH && LAST_SEND_FUSE_MESSAGE != FM_SAFETY){
+            donmezogluSerialPrintC('G');
+
+            LAST_SEND_FUSE_MESSAGE = FM_SAFETY;
+        }
+        else if(ControlHigh){
+            if(LAST_SEND_FUSE_MESSAGE != FM_CONTROL){
                 donmezogluSerialPrintC('K');
 
-                lastSendMessage = LSM_CONTROL;
+                LAST_SEND_FUSE_MESSAGE = FM_CONTROL;
             }
         }
         else if(ExplosionHigh && fuseConnected){
-            if(lastSendMessage != LSM_EXPLOSION){
+            if(LAST_SEND_FUSE_MESSAGE != FM_EXPLOSION){
                 donmezogluSerialPrintC('P');
 
-                lastSendMessage = LSM_EXPLOSION;
+                LAST_SEND_FUSE_MESSAGE = FM_EXPLOSION;
             }
         }
-        else if(ChargeHigh && fuseConnected){
-            if(lastSendMessage != LSM_CHARGE){
-                donmezogluSerialPrintC('S');
+        else if(CHARGE_HIGH_REQUESTED && fuseConnected){
+            if(!SHOCK_SENSOR_ACTIVE_REQUESTED && SHOCK_SENSOR_ACTIVE){
+                // pass
+            }
+            else{
+                if(LAST_SEND_FUSE_MESSAGE != FM_CHARGE){
+                    donmezogluSerialPrintC('S');    
 
-                lastSendMessage = LSM_CHARGE;
+                    LAST_SEND_FUSE_MESSAGE = FM_CHARGE;
+                }
             }
         }
         else{
-            lastSendMessage = LSM_NONE;
+            LAST_SEND_FUSE_MESSAGE = FM_NONE;
         }
     }
 }
@@ -317,22 +331,49 @@ void serialDataReceivedH(void){
 
 void serialDataReceivedE(void){
     FUZE_STATUS = 2;
+    CHARGE_HIGH = true;
+}
+
+void serialDataReceivedW(void){
+    CHARGE_HIGH = false;
+
+    if(fuseConnected){
+        FUZE_STATUS = 1;
+    }
+    else{
+        FUZE_STATUS = 0;
+    }
+}
+
+void serialDataReceivedN(void){
+    CHARGE_HIGH = false;
+
+    if(fuseConnected){
+        FUZE_STATUS = 1;
+    }
+    else{
+        FUZE_STATUS = 0;
+    }
 }
 
 void serialDataReceivedZ(void){
     TAPA_STATUS = 0;
+    SHOCK_SENSOR_ACTIVE = false;
 }
 
 void serialDataReceivedC(void){
     TAPA_STATUS = 1;
+    SHOCK_SENSOR_ACTIVE = false;
 }
 
 void serialDataReceivedL(void){
     TAPA_STATUS = 2;
+    SHOCK_SENSOR_ACTIVE = true;
 }
 
 void serialDataReceivedT(void){
     TAPA_STATUS = 3;
+    SHOCK_SENSOR_ACTIVE = true;
 }
 
 void awaitFuzeData(void){
@@ -358,6 +399,14 @@ void awaitFuzeData(void){
             case 'H':
             case 'h':
                 serialDataReceivedH();
+                break;
+            case 'W':
+            case 'w':
+                serialDataReceivedW();
+                break;
+            case 'N':
+            case 'n':
+                serialDataReceivedN();
                 break;
             case 'E':
             case 'e':
@@ -422,10 +471,6 @@ void periodicTask(timeUs_t currentTimeUs){
     sendFuzeData();
 
     awaitFuzeData();
-
-    //chargeTimeControl(currentTimeUs);
-
-    lastSendMessagePrev = lastSendMessage;
 
     return;
 }
