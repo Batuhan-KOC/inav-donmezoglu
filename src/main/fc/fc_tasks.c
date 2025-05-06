@@ -769,7 +769,7 @@ cfTask_t cfTasks[TASK_COUNT] = {
     [TASK_DONMEZOGLU] = {
         .taskName = "DONMEZOGLU",
         .taskFunc = donmezogluUpdateTask,
-        .desiredPeriod = TASK_PERIOD_HZ(33),
-        .staticPriority = TASK_PRIORITY_LOW,
+        .desiredPeriod = TASK_PERIOD_HZ(100),
+        .staticPriority = TASK_PRIORITY_HIGH,
     },
 };

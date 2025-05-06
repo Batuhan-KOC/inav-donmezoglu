@@ -23,6 +23,7 @@
 #include "sensors/barometer.h"
 
 #include "io/serial.h"
+#include "drivers/serial_uart.h"
 #include "fc/rc_controls.h"
 #include "rx/rx.h"
 #include "io/beeper.h"
@@ -108,7 +109,11 @@ void checkSafety(void){
         if(!firstFuzeDataReceived){
             static uint32_t bytesWaiting = 0;
 
-            bytesWaiting = serialRxBytesWaiting(dSerialPort);
+            if (dSerialPort->rxBufferHead >= dSerialPort->rxBufferTail) {
+                bytesWaiting = dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
+            } else {
+                bytesWaiting = dSerialPort->rxBufferSize + dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
+            }
 
             if(bytesWaiting > 0){
                 firstFuzeDataReceived = true;
@@ -238,6 +243,9 @@ void sendFuzeData(void){
     else{
         if(ControlHigh){
             if(lastSendMessage != LSM_CONTROL){
+                dSerialPort->rxBufferHead = 0;
+                dSerialPort->rxBufferTail = 0;
+
                 donmezogluSerialPrintC('K');
 
                 lastSendMessage = LSM_CONTROL;
@@ -270,14 +278,18 @@ void sendFuzeData(void){
 void awaitFuzeData(void){
     static uint32_t bytesWaiting = 0;
 
-    bytesWaiting = serialRxBytesWaiting(dSerialPort);
+    if(ExpectingControlMessage){
+        if (dSerialPort->rxBufferHead >= dSerialPort->rxBufferTail) {
+            bytesWaiting = dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
+        } else {
+            bytesWaiting = dSerialPort->rxBufferSize + dSerialPort->rxBufferHead - dSerialPort->rxBufferTail;
+        }
 
-    if(bytesWaiting > 0){
-        for(uint32_t i = 1; i <= bytesWaiting; ++i){
-            static uint8_t dataReaded;
-            dataReaded = serialRead(dSerialPort);
+        if(bytesWaiting > 0){
+            for(uint32_t i = 1; i <= bytesWaiting; ++i){
+                static uint8_t dataReaded;
+                dataReaded = serialRead(dSerialPort);
 
-            if(ExpectingControlMessage){
                 if(dataReaded == 'F' || dataReaded == 'f'){
                     SafetyMessageReturned = true;
                     SafetyMessageReturnedOk = true;
