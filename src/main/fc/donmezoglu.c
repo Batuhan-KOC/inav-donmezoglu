@@ -88,6 +88,9 @@ void waitRcData(void){
            oldAUX5 != AUX_MID_VALUE){
             dRcConnection = true;
         }
+        else{
+            FUZE_STATUS = 8; // Connect Rc Controller
+        }
     }
 
     return;

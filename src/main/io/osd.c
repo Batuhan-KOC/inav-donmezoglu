@@ -797,6 +797,9 @@ void osdFormatPilotName(char *buff)
     else if(FUZE_STATUS == 7){
         strcpy(buff, "ANAHTAR > AC   ");
     }
+    else if(FUZE_STATUS == 8){
+        strcpy(buff, "KUMANDAYI BAGLA");
+    }
 }
 
 static const char * osdArmingDisabledReasonMessage(void)
