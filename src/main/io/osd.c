@@ -761,44 +761,14 @@ static void osdFormatCraftName(char *buff)
 
 void osdFormatPilotName(char *buff)
 {
-    /*
     if (strlen(systemConfig()->pilotName) == 0)
-            strcpy(buff, "BATUHANKOC");
+            strcpy(buff, "PILOT_NAME");
     else {
         for (int i = 0; i < MAX_NAME_LENGTH; i++) {
             buff[i] = sl_toupper((unsigned char)systemConfig()->pilotName[i]);
             if (systemConfig()->pilotName[i] == 0)
                 break;
         }
-    }
-    */
-
-    if(FUZE_STATUS == 0){
-        strcpy(buff, "      H-H      ");
-    }
-    else if(FUZE_STATUS == 1){
-        strcpy(buff, "      E-H      ");
-    }
-    else if(FUZE_STATUS == 2){
-        strcpy(buff, "      E-E      ");
-    }
-    else if(FUZE_STATUS == 3){
-        strcpy(buff, "GUVENLIK > AC  ");
-    }
-    else if(FUZE_STATUS == 4){
-        strcpy(buff, "SARJ > KAPAT   ");
-    }
-    else if(FUZE_STATUS == 5){
-        strcpy(buff, "PATLAMA > KAPAT");
-    }
-    else if(FUZE_STATUS == 6){
-        strcpy(buff, "KONTROL > KAPAT");
-    }
-    else if(FUZE_STATUS == 7){
-        strcpy(buff, "ANAHTAR > AC   ");
-    }
-    else if(FUZE_STATUS == 8){
-        strcpy(buff, "KUMANDAYI BAGLA");
     }
 }
 
@@ -1789,6 +1759,7 @@ static bool osdDrawSingleElement(uint8_t item)
     }
 
     case OSD_CURRENT_DRAW: {
+        /*
         osdFormatCentiNumber(buff, getAmperage(), 0, 2, 0, 3, false);
         buff[3] = SYM_AMP;
         buff[4] = '\0';
@@ -1797,6 +1768,36 @@ static bool osdDrawSingleElement(uint8_t item)
         if ((current_alarm > 0) && ((getAmperage() / 100.0f) > current_alarm)) {
             TEXT_ATTRIBUTES_ADD_BLINK(elemAttr);
         }
+        */
+
+        if(FUZE_STATUS == 0){
+            strcpy(buff, "      H-H      ");
+        }
+        else if(FUZE_STATUS == 1){
+            strcpy(buff, "      E-H      ");
+        }
+        else if(FUZE_STATUS == 2){
+            strcpy(buff, "      E-E      ");
+        }
+        else if(FUZE_STATUS == 3){
+            strcpy(buff, "GUVENLIK > AC  ");
+        }
+        else if(FUZE_STATUS == 4){
+            strcpy(buff, "SARJ > KAPAT   ");
+        }
+        else if(FUZE_STATUS == 5){
+            strcpy(buff, "PATLAMA > KAPAT");
+        }
+        else if(FUZE_STATUS == 6){
+            strcpy(buff, "KONTROL > KAPAT");
+        }
+        else if(FUZE_STATUS == 7){
+            strcpy(buff, "ANAHTAR > AC   ");
+        }
+        else if(FUZE_STATUS == 8){
+            strcpy(buff, "KUMANDAYI BAGLA");
+        }
+
         break;
     }
 
