@@ -28,7 +28,7 @@
 #include "io/beeper.h"
 
 int FUZE_STATUS = 0;
-serialPortIdentifier_e FUZE_PORT_IDENTIFIER = SERIAL_PORT_UART5;
+serialPortIdentifier_e FUZE_PORT_IDENTIFIER = SERIAL_PORT_USART5;
 
 /* 
   * TAPA STATUS
@@ -107,10 +107,10 @@ void setFuzeData(int value){
 
 void waitRcData(void){
     if(dInitializationCompleted && !dRcConnection){
-        oldAUX2 = rcData[AUX2];
-        oldAUX3 = rcData[AUX3];
-        oldAUX4 = rcData[AUX4];
-        oldAUX5 = rcData[AUX5];
+        oldAUX2 = rxGetChannelValue(AUX2);
+        oldAUX3 = rxGetChannelValue(AUX3);
+        oldAUX4 = rxGetChannelValue(AUX4);
+        oldAUX5 = rxGetChannelValue(AUX5);
 
         // At least one of them should be not equal to default mid value. AUX5 is in failsafe. Do not read it
         if(oldAUX2 != AUX_MID_VALUE || 
@@ -133,10 +133,10 @@ void checkSafety(void){
     static bool firstFuzeDataReceived = false;
 
     if(dInitializationCompleted && dRcConnection && !dInitialSafety){
-        float aux2Val = rcData[AUX2];
-        float aux3Val = rcData[AUX3];
-        float aux4Val = rcData[AUX4];
-        float aux5Val = rcData[AUX5];
+        float aux2Val = rxGetChannelValue(AUX2);
+        float aux3Val = rxGetChannelValue(AUX3);
+        float aux4Val = rxGetChannelValue(AUX4);
+        float aux5Val = rxGetChannelValue(AUX5);
 
         if(!firstFuzeDataReceived){
             static uint32_t bytesWaiting = 0;
@@ -204,10 +204,10 @@ void initializationTask(void){
 
 // Read new rc data to local variables
 void readRcData(void){
-    AUX2Value = rcData[AUX2];
-    AUX3Value = rcData[AUX3];
-    AUX4Value = rcData[AUX4];
-    AUX5Value = rcData[AUX5];
+    AUX2Value = rxGetChannelValue(AUX2);
+    AUX3Value = rxGetChannelValue(AUX3);
+    AUX4Value = rxGetChannelValue(AUX4);
+    AUX5Value = rxGetChannelValue(AUX5);
 }
 
 // Examine readed rc values and assign them as high and low and set edge values if necessary
