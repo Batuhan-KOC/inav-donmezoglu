@@ -42,12 +42,15 @@ int FUZE_STATUS = 0;
 int TAPA_STATUS = -1;
 
 static serialPort_t* dSerialPort = NULL;
+static serialPort_t* dSerialPortDebug1 = NULL;
+static serialPort_t* dSerialPortDebug2 = NULL;
+static serialPort_t* dSerialPortDebug3 = NULL;
 static bool dInitializationCompleted = false;
 static bool dRcConnection = false;
 
 static bool dInitialSafety = false;
 
-static int dLastAux5State = -1;
+static int dLastAux3State = -1;
 
 static float AUX_EDGE_VALUE_MIN = 1300;
 static float AUX_MID_VALUE = 1500;
@@ -65,10 +68,6 @@ static bool ExplosionHigh = false;
 
 static bool SendTapaEnable = false;
 static bool SendTapaDisable = false;
-
-static bool ControlPositiveEdge = false;
-static bool ChargePositiveEdge = false;
-static bool SafetyPositiveEdge = false;
 
 static bool fuseConnectedMessageReceived = false;
 static bool fuseConnected = false;
@@ -96,11 +95,12 @@ void waitRcData(void){
         oldAUX4 = rcData[AUX4];
         oldAUX5 = rcData[AUX5];
 
-        // At least one of them should be not equal to default mid value
+        // At least one of them should be not equal to default mid value. AUX5 is in failsafe. Do not read it
         if(oldAUX2 != AUX_MID_VALUE || 
            oldAUX3 != AUX_MID_VALUE || 
-           oldAUX4 != AUX_MID_VALUE || 
-           oldAUX5 != AUX_MID_VALUE){
+           oldAUX4 != AUX_MID_VALUE //|| 
+            //oldAUX5 != AUX_MID_VALUE
+        ){
             dRcConnection = true;
         }
         else{
@@ -168,9 +168,15 @@ void initializationTask(void){
     if(!dInitializationCompleted){
 
         serialPortUsage_t* usage = findSerialPortUsageByIdentifier(SERIAL_PORT_UART5);
+        serialPortUsage_t* usageDebug1 = findSerialPortUsageByIdentifier(SERIAL_PORT_USB_VCP);
+        serialPortUsage_t* usageDebug2 = findSerialPortUsageByIdentifier(SERIAL_PORT_USART1);
+        serialPortUsage_t* usageDebug3 = findSerialPortUsageByIdentifier(SERIAL_PORT_SOFTSERIAL1);
 
         if(usage != NULL){
             dSerialPort = usage->serialPort;
+            dSerialPortDebug1 = usageDebug1->serialPort;
+            dSerialPortDebug2 = usageDebug2->serialPort;
+            dSerialPortDebug3 = usageDebug3->serialPort;
 
             dInitializationCompleted = true;
         }
@@ -195,64 +201,52 @@ void readRcData(void){
 // Examine readed rc values and assign them as high and low and set edge values if necessary
 void parseRcData(void){
     if(AUX2Value > AUX_EDGE_VALUE){
-        if(!ControlHigh){
-            ControlPositiveEdge = true;
-        }
-
         ControlHigh = true;
     }
     else{
         ControlHigh = false;
     }
 
-    if(AUX3Value > AUX_EDGE_VALUE){
-        if(!ChargeHigh){
-            ChargePositiveEdge = true;
-        }
-
-        ChargeHigh = true;
+    if(AUX5Value > AUX_EDGE_VALUE){
+        ExplosionHigh = true;
     }
     else{
-        ChargeHigh = false;
+        ExplosionHigh = false;
     }
 
     if(AUX4Value > AUX_EDGE_VALUE){
-        if(!SafetyHigh){
-            SafetyPositiveEdge = true;
-        }
-
         SafetyHigh = true;
     }
     else{
         SafetyHigh = false;
     }
 
-    if(AUX5Value > AUX_EDGE_VALUE){
-        if(dLastAux5State != 3){
+    if(AUX3Value > AUX_EDGE_VALUE){
+        if(dLastAux3State != 3){
             SendTapaEnable = false;
             SendTapaDisable = false;
-            ExplosionHigh = true;
+            ChargeHigh = true;
         }
 
-        dLastAux5State = 3;
+        dLastAux3State = 3;
     }
-    else if(AUX5Value > AUX_EDGE_VALUE_MIN){
-        if(dLastAux5State != 2){
+    else if(AUX3Value > AUX_EDGE_VALUE_MIN){
+        if(dLastAux3State != 2){
             SendTapaEnable = true;
             SendTapaDisable = false;
-            ExplosionHigh = false;
+            ChargeHigh = false;
         }
 
-        dLastAux5State = 2;
+        dLastAux3State = 2;
     }
     else{
-        if(dLastAux5State != 1){
+        if(dLastAux3State != 1){
             SendTapaEnable = false;
             SendTapaDisable = true;
             ExplosionHigh = false;
         }
 
-        dLastAux5State = 1;
+        dLastAux3State = 1;
     }
 }
 
