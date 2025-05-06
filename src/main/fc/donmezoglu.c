@@ -30,6 +30,17 @@
 
 int FUZE_STATUS = 0;
 
+/* 
+  * TAPA STATUS
+  *
+  * -1 : UNKNOWN
+  * 0  : Z (ERROR) 
+  * 1  : C (DISABLED)
+  * 2  : L (ACTIVE AND LOW SIGNAL)
+  * 3  : T (ACTIVE AND HIGH SIGNAL)
+ */
+int TAPA_STATUS = -1;
+
 static serialPort_t* dSerialPort = NULL;
 static bool dInitializationCompleted = false;
 static bool dRcConnection = false;
@@ -289,6 +300,22 @@ void serialDataReceivedE(){
     FUZE_STATUS = 2;
 }
 
+void serialDataReceivedZ(){
+    TAPA_STATUS = 0;
+}
+
+void serialDataReceivedC(){
+    TAPA_STATUS = 1;
+}
+
+void serialDataReceivedL(){
+    TAPA_STATUS = 2;
+}
+
+void serialDataReceivedT(){
+    TAPA_STATUS = 3;
+}
+
 void awaitFuzeData(void){
     static uint32_t bytesWaiting = 0;
 
@@ -316,6 +343,22 @@ void awaitFuzeData(void){
             case 'E':
             case 'e':
                 serialDataReceivedE();
+                break;
+            case 'Z':
+            case 'z':
+                serialDataReceivedZ();
+                break;
+            case 'C':
+            case 'c':
+                serialDataReceivedC();
+                break;
+            case 'L':
+            case 'l':
+                serialDataReceivedL();
+                break;
+            case 'T':
+            case 't':
+                serialDataReceivedT();
                 break;
             default:
                 break;

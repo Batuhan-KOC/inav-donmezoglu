@@ -13,6 +13,7 @@
  */
 
 extern int FUZE_STATUS;
+extern int TAPA_STATUS;
 
 void donmezogluUpdate(timeUs_t currentTimeUs);
 

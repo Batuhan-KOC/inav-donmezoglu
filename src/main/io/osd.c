@@ -1771,13 +1771,64 @@ static bool osdDrawSingleElement(uint8_t item)
         */
 
         if(FUZE_STATUS == 0){
-            strcpy(buff, "      H-H      ");
+            switch(TAPA_STATUS)
+            {
+                case -1:
+                    strcpy(buff, "      H-H-X    ");
+                    break;
+                case 0:
+                    strcpy(buff, "      H-H-Z    ");
+                    break;
+                case 1:
+                    strcpy(buff, "      H-H-C    ");
+                    break;
+                case 2:
+                    strcpy(buff, "      H-H-L    ");
+                    break;
+                case 3:
+                    strcpy(buff, "      H-H-T    ");
+                    break;
+            }
         }
         else if(FUZE_STATUS == 1){
-            strcpy(buff, "      E-H      ");
+            switch(TAPA_STATUS)
+            {
+                case -1:
+                    strcpy(buff, "      E-H-X    ");
+                    break;
+                case 0:
+                    strcpy(buff, "      E-H-Z    ");
+                    break;
+                case 1:
+                    strcpy(buff, "      E-H-C    ");
+                    break;
+                case 2:
+                    strcpy(buff, "      E-H-L    ");
+                    break;
+                case 3:
+                    strcpy(buff, "      E-H-T    ");
+                    break;
+            }
         }
         else if(FUZE_STATUS == 2){
-            strcpy(buff, "      E-E      ");
+            switch(TAPA_STATUS)
+            {
+                case -1:
+                    strcpy(buff, "      E-E-X    ");
+                    break;
+                case 0:
+                    strcpy(buff, "      E-E-Z    ");
+                    break;
+                case 1:
+                    strcpy(buff, "      E-E-C    ");
+                    break;
+                case 2:
+                    strcpy(buff, "      E-E-L    ");
+                    break;
+                case 3:
+                    strcpy(buff, "      E-E-T    ");
+                    break;
+            }
         }
         else if(FUZE_STATUS == 3){
             strcpy(buff, "GUVENLIK > AC  ");
