@@ -164,7 +164,7 @@ void checkSafety(void){
             if(aux4Val < AUX_EDGE_VALUE){
                 setFuzeData(3); // Güvenliği aç
             }
-            else if(aux3Val > AUX_EDGE_VALUE){
+            else if(aux3Val > AUX_EDGE_VALUE_MIN){
                 setFuzeData(4); // Şarjı kapat
             }
             else if(aux5Val > AUX_EDGE_VALUE_MIN){
