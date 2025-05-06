@@ -251,8 +251,6 @@ void sendFuzeData(void){
                 lastSendMessage = LSM_CONTROL;
 
                 ExpectingControlMessage = true;
-
-                FUZE_STATUS = 0;
             }
         }
         else if(ExplosionHigh && SafetyMessageReturnedOk){
